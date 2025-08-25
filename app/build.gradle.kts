@@ -60,8 +60,18 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    implementation("androidx.navigation:navigation-compose:2.8.0")
     implementation("com.google.firebase:firebase-auth:21.0.1")
     implementation("com.google.firebase:firebase-database:20.0.3")
     implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
 
+    implementation("io.ktor:ktor-client-core:2.3.6")
+    implementation("io.ktor:ktor-client-android:2.3.6")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.6")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.6")
+
+    implementation("io.ktor:ktor-client-core:2.3.5")
+    implementation("io.ktor:ktor-client-cio:2.3.5")
 }
+

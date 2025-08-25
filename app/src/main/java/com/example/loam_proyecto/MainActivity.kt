@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.loam_proyecto.ui.theme.LOAMProyectoTheme
 import com.google.firebase.database.FirebaseDatabase
+import com.example.loam_proyecto.Navegation.AppNavegation
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,19 +21,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             LOAMProyectoTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                AppNavegation()
             }
         }
         val database = FirebaseDatabase.getInstance()
         val myRef = database.getReference("mensaje")
 
         // Escribe un valor en la base
-        myRef.setValue("Hola yara")
+        myRef.setValue("Hola")
     }
 }
 
