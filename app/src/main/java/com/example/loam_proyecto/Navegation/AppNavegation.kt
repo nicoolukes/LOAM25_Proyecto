@@ -5,7 +5,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.loam_proyecto.Screen.MainScreen
+import com.example.loam_proyecto.Screen.MapaScreen
 import com.example.loam_proyecto.Screen.PreciosScreen
+
 
 
 @Composable
@@ -17,6 +19,7 @@ fun AppNavegation (){
     NavHost(navController = navController, startDestination = "main") {
         composable("main") { MainScreen(navController) } // es una pantalla navegable la "ruta" es <main>
         composable ("precios"){PreciosScreen()  }
+        composable ("mapa"){ MapaScreen()  }
     }
 
 

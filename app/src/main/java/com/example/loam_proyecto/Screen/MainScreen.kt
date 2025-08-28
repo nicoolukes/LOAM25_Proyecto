@@ -18,8 +18,12 @@ fun MainScreen(navController: NavHostController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Button(onClick = { navController.navigate("precios") }) {
-            Text("Ver precios")
+            Text("Ver Precios")
         }
         LlamarConsejoInge()
+
+        Button(onClick = {navController.navigate("mapa")} ) {
+            Text("Ver Mapa")
+        }
     }
 }
