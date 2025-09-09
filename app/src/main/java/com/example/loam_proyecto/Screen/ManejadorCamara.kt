@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import com.example.loam_proyecto.Screen.ManejadorPermisos
 
 class ManejadorCamara(
     private val context: Context,

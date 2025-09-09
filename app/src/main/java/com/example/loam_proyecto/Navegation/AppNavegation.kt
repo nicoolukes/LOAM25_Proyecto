@@ -5,6 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.loam_proyecto.Screen.BateryScreen
+import com.example.loam_proyecto.Screen.Camara
 import com.example.loam_proyecto.Screen.ChatScreen
 import com.example.loam_proyecto.Screen.MainScreen
 import com.example.loam_proyecto.Screen.MapaScreen
@@ -24,6 +25,7 @@ fun AppNavegation (){
         composable ("mapa"){ MapaScreen()  }
         composable ("bateria"){ BateryScreen() }
         composable ("Chat"){ ChatScreen() }
+        composable ("camara"){ Camara() }
 
     }
 
