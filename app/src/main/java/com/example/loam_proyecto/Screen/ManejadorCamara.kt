@@ -1,4 +1,4 @@
-package com.example.loam_proyecto.Screen // Asegúrate de que el paquete sea el correcto
+package com.example.loam_proyecto.Screen
 
 import android.annotation.SuppressLint
 import android.content.ContentValues
@@ -11,29 +11,23 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.*
 import androidx.camera.view.PreviewView
-import androidx.compose.ui.semantics.error
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
-import androidx.privacysandbox.tools.core.generator.build
-import androidx.transition.addListener
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-private val privacysandbox: Any
-
 class ManejadorCamara(
     private val context: Context,
     private val previewView: PreviewView,
-    private val lifecycleOwner: LifecycleOwner // Necesario para vincular el ciclo de vida de la cámara
+    private val lifecycleOwner: LifecycleOwner
 ) {
     private var cameraProvider: ProcessCameraProvider? = null
     private var preview: Preview? = null
-    private var imageCapture: androidx.camera.core.ImageCapture? = null
-    private var videoCapture: VideoCapture<androidx.camera.video.Recorder>? = null
-    private var recording: androidx.camera.video.Recording? = null
+    private var imageCapture: ImageCapture? = null
+    private var videoCapture: VideoCapture<Recorder>? = null
+    private var recording: Recording? = null
     private lateinit var cameraExecutor: ExecutorService
 
     init {
@@ -42,47 +36,59 @@ class ManejadorCamara(
 
     fun prenderCamara() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-        cameraProviderFuture.addListener({
-            cameraProvider = cameraProviderFuture.get()
-
-            // Configuración del Preview
-            preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(previewView.surfaceProvider)
-            }
-
-            // Configuración de ImageCapture (para fotos)
-            imageCapture = androidx.camera.core.ImageCapture.Builder().build()
-
-            // Configuración de VideoCapture (para videos)
-            val recorder = androidx.camera.video.Recorder.Builder()
-                .setQualitySelector(androidx.camera.video.QualitySelector.from(androidx.camera.video.Quality.HIGHEST))
-                .build()
-            videoCapture = androidx.camera.video.VideoCapture.withOutput(recorder)
-
-            // Seleccionar la cámara trasera por defecto
-            val cameraSelector = androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
-
+        cameraProviderFuture.addListener(Runnable {
             try {
+                cameraProvider = cameraProviderFuture.get()
+
+                // Configuración del Preview
+                preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(previewView.surfaceProvider)
+                }
+
+                // Configuración de ImageCapture (para fotos)
+                imageCapture = ImageCapture.Builder()
+                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                    .build()
+
+                // Configuración de VideoCapture (para videos)
+                val recorder = Recorder.Builder()
+                    .setQualitySelector(QualitySelector.from(Quality.HIGHEST))
+                    .build()
+                videoCapture = VideoCapture.withOutput(recorder)
+
+                // Seleccionar la cámara trasera por defecto
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
                 // Desvincular todos los casos de uso antes de volver a vincular
                 cameraProvider?.unbindAll()
 
                 // Vincular casos de uso a la cámara
                 cameraProvider?.bindToLifecycle(
-                    lifecycleOwner, // Usar el LifecycleOwner pasado
+                    lifecycleOwner,
                     cameraSelector,
                     preview,
-                    imageCapture, // Añadir imageCapture si vas a tomar fotos
-                    videoCapture  // Añadir videoCapture si vas a grabar videos
+                    imageCapture,
+                    videoCapture
                 )
+
+                Log.d("ManejadorCamara", "Cámara iniciada exitosamente")
+
             } catch (exc: Exception) {
                 Log.e("ManejadorCamara", "Fallo al vincular casos de uso", exc)
-                Toast.makeText(context, "Error al iniciar la cámara: ${exc.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    context,
+                    "Error al iniciar la cámara: ${exc.message}",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }, ContextCompat.getMainExecutor(context))
     }
 
     fun tomarFoto() {
-        val imageCapture = imageCapture ?: return // Salir si imageCapture no está inicializado
+        val imageCapture = imageCapture ?: run {
+            Toast.makeText(context, "Cámara no inicializada", Toast.LENGTH_SHORT).show()
+            return
+        }
 
         // Crear nombre de archivo con marca de tiempo
         val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US)
@@ -96,7 +102,7 @@ class ManejadorCamara(
         }
 
         // Configurar opciones de salida
-        val outputOptions = androidx.camera.core.ImageCapture.OutputFileOptions
+        val outputOptions = ImageCapture.OutputFileOptions
             .Builder(
                 context.contentResolver,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -107,29 +113,35 @@ class ManejadorCamara(
         imageCapture.takePicture(
             outputOptions,
             ContextCompat.getMainExecutor(context),
-            object : androidx.camera.core.ImageCapture.OnImageSavedCallback {
-                override fun onError(exc: androidx.camera.core.ImageCaptureException) {
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exc: ImageCaptureException) {
                     Log.e("ManejadorCamara", "Error al tomar foto: ${exc.message}", exc)
-                    Toast.makeText(context, "Error al guardar foto: ${exc.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "Error al guardar foto: ${exc.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
 
-                override fun onImageSaved(output: androidx.camera.core.ImageCapture.OutputFileResults) {
-                    val msg = "Foto guardada: ${output.savedUri}"
+                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    val msg = "Foto guardada correctamente"
                     Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                    Log.d("ManejadorCamara", msg)
+                    Log.d("ManejadorCamara", "Foto guardada: ${output.savedUri}")
                 }
             }
         )
     }
 
-
-    @SuppressLint("MissingPermission") // Los permisos se deben chequear antes de llamar a esta función
+    @SuppressLint("MissingPermission")
     fun empezarGrabacion() {
-        val videoCapture = this.videoCapture ?: return // Salir si videoCapture no está inicializado
+        val videoCapture = this.videoCapture ?: run {
+            Toast.makeText(context, "Cámara no inicializada para video", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-        // Si ya hay una grabación en curso, detenerla primero o simplemente salir
+        // Si ya hay una grabación en curso, mostrar mensaje
         if (recording != null) {
-            Log.w("ManejadorCamara", "Ya hay una grabación en curso.")
+            Toast.makeText(context, "Ya hay una grabación en curso", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -143,37 +155,36 @@ class ManejadorCamara(
             }
         }
 
-        val mediaStoreOutputOptions = androidx.camera.video.MediaStoreOutputOptions
+        val mediaStoreOutputOptions = MediaStoreOutputOptions
             .Builder(context.contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
             .setContentValues(contentValues)
             .build()
 
         recording = videoCapture.output
             .prepareRecording(context, mediaStoreOutputOptions)
-            // Habilitar la grabación de audio si tienes el permiso RECORD_AUDIO
-            .withAudioEnabled() // Asegúrate de tener el permiso RECORD_AUDIO
+            .withAudioEnabled()
             .start(ContextCompat.getMainExecutor(context)) { recordEvent ->
                 when (recordEvent) {
-                    is androidx.camera.video.VideoRecordEvent.Start -> {
+                    is VideoRecordEvent.Start -> {
                         Toast.makeText(context, "Grabación iniciada", Toast.LENGTH_SHORT).show()
                         Log.d("ManejadorCamara", "Grabación iniciada")
                     }
-                    is androidx.camera.video.VideoRecordEvent.Finalize -> {
+                    is VideoRecordEvent.Finalize -> {
                         if (!recordEvent.hasError()) {
-                            val msg = "Video guardado: ${recordEvent.outputResults.outputUri}"
+                            val msg = "Video guardado correctamente"
                             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                            Log.d("ManejadorCamara", msg)
+                            Log.d("ManejadorCamara", "Video guardado: ${recordEvent.outputResults.outputUri}")
                         } else {
                             recording?.close()
                             recording = null
                             Log.e("ManejadorCamara", "Error de grabación: ${recordEvent.error}")
-                            Toast.makeText(context, "Error de grabación: ${recordEvent.cause?.message}", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                context,
+                                "Error de grabación: ${recordEvent.cause?.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
-                    }
-                    is androidx.camera.video.VideoRecordEvent.Status -> {
-                        // Puedes usar esto para mostrar el progreso de la grabación
-                        // val stats: RecordingStats = recordEvent.recordingStats
-                        // Log.i("ManejadorCamara", "Progreso de grabación: ${stats.numBytesRecorded} bytes")
+                        recording = null
                     }
                 }
             }
@@ -181,15 +192,20 @@ class ManejadorCamara(
 
     fun detenerGrabacion() {
         recording?.stop()
-        recording = null
-        Log.d("ManejadorCamara", "Grabación detenida solicitada.")
+        Log.d("ManejadorCamara", "Detener grabación solicitado")
     }
 
-    // Es importante liberar los recursos cuando la cámara ya no se necesite.
-    // Podrías llamarlo en el onDispose de tu Composable o en el onDestroy de tu Activity/Fragment.
     fun liberarRecursos() {
-        cameraExecutor.shutdown()
-        cameraProvider?.unbindAll() // Desvincula todos los casos de uso
-        Log.d("ManejadorCamara", "Recursos de la cámara liberados.")
+        try {
+            recording?.stop()
+            recording = null
+            cameraProvider?.unbindAll()
+            if (::cameraExecutor.isInitialized) {
+                cameraExecutor.shutdown()
+            }
+            Log.d("ManejadorCamara", "Recursos liberados correctamente")
+        } catch (e: Exception) {
+            Log.e("ManejadorCamara", "Error al liberar recursos", e)
+        }
     }
 }

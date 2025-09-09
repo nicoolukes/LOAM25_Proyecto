@@ -65,7 +65,6 @@ dependencies {
     implementation(libs.androidx.camera.view) // Para PreviewView y otras utilidades de vista
     implementation(libs.androidx.camera.lifecycle)
 
-
     implementation("androidx.navigation:navigation-compose:2.8.0")
     implementation("com.google.firebase:firebase-auth:21.0.1")
     implementation("com.google.firebase:firebase-database:20.0.3")
@@ -82,6 +81,10 @@ dependencies {
     implementation("org.osmdroid:osmdroid-android:6.1.16")
     implementation("org.osmdroid:osmdroid-wms:6.1.16")
     implementation("org.osmdroid:osmdroid-mapsforge:6.1.16")
+    implementation("androidx.camera:camera-core:1.3.0")
     implementation("androidx.camera:camera-camera2:1.3.0")
+    implementation("androidx.camera:camera-lifecycle:1.3.0")
+    implementation("androidx.camera:camera-video:1.3.0")
+    implementation("androidx.camera:camera-view:1.3.0")
 }
 

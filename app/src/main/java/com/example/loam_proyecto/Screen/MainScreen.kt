@@ -29,6 +29,5 @@ fun MainScreen(navController: NavHostController) {
         Button(onClick = {navController.navigate("camara")} ) {
             Text("Camara")
         }
-        Camara()
     }
 }
