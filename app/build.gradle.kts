@@ -62,6 +62,9 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.androidx.camera.view) // Para PreviewView y otras utilidades de vista
+    implementation(libs.androidx.camera.lifecycle)
+
 
     implementation("androidx.navigation:navigation-compose:2.8.0")
     implementation("com.google.firebase:firebase-auth:21.0.1")
@@ -79,5 +82,6 @@ dependencies {
     implementation("org.osmdroid:osmdroid-android:6.1.16")
     implementation("org.osmdroid:osmdroid-wms:6.1.16")
     implementation("org.osmdroid:osmdroid-mapsforge:6.1.16")
+    implementation("androidx.camera:camera-camera2:1.3.0")
 }
 
