@@ -23,39 +23,26 @@ fun Camara() {
     val lifecycleOwner = LocalLifecycleOwner.current
     val previewView = remember { PreviewView(context) }
 
-    // Estado para saber si los permisos han sido concedidos
+    // Estado permisos
     var hasCameraPermission by remember {
         mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.RECORD_AUDIO
-                    ) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         )
     }
 
-    // Launcher para solicitar permisos
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         hasCameraPermission = permissions[Manifest.permission.CAMERA] == true &&
                 permissions[Manifest.permission.RECORD_AUDIO] == true
-
-        if (!hasCameraPermission) {
-            // Los permisos fueron denegados
-            // Aquí podrías manejar el caso de permisos denegados permanentemente
-        }
     }
 
-    // Inicializa ManejadorCamara solo cuando tengamos permisos
+    // Inicializa manejador solo cuando tengamos permisos
     val manejadorCamara = remember(context, previewView, lifecycleOwner) {
         ManejadorCamara(context, previewView, lifecycleOwner)
     }
 
-    // Efecto para solicitar permisos si no se tienen y prender la cámara si se tienen
     LaunchedEffect(hasCameraPermission) {
         if (hasCameraPermission) {
             manejadorCamara.prenderCamara()
@@ -69,7 +56,6 @@ fun Camara() {
         }
     }
 
-    // Liberar recursos cuando el Composable se va de la composición
     DisposableEffect(Unit) {
         onDispose {
             manejadorCamara.liberarRecursos()
@@ -78,13 +64,11 @@ fun Camara() {
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (hasCameraPermission) {
-            // Mostrar preview de la cámara
             AndroidView(
                 factory = { previewView },
                 modifier = Modifier.weight(1f)
             )
 
-            // Botones de control
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -95,15 +79,32 @@ fun Camara() {
                 Button(onClick = { manejadorCamara.tomarFoto() }) {
                     Text("Foto")
                 }
+
                 Button(onClick = { manejadorCamara.empezarGrabacion() }) {
                     Text("Grabar")
                 }
+
                 Button(onClick = { manejadorCamara.detenerGrabacion() }) {
                     Text("Detener")
                 }
             }
+
+            // Fila extra para cambiar cámara y flash
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(onClick = { manejadorCamara.cambiarCamara() }) {
+                    Text("Cambiar Cámara")
+                }
+                Button(onClick = { manejadorCamara.toggleFlash() }) {
+                    Text("Flash")
+                }
+            }
         } else {
-            // Mostrar mensaje de permisos
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center

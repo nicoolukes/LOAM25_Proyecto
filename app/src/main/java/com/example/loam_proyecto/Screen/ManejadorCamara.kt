@@ -17,7 +17,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import com.example.loam_proyecto.Screen.ManejadorPermisos
+import androidx.camera.core.TorchState
 
 class ManejadorCamara(
     private val context: Context,
@@ -29,7 +29,13 @@ class ManejadorCamara(
     private var imageCapture: ImageCapture? = null
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
+    private var camera: Camera? = null
+
+    // Executor para tareas de cámara
     private lateinit var cameraExecutor: ExecutorService
+
+    // Estado de lente: BACK por defecto
+    private var lensFacing: Int = CameraSelector.LENS_FACING_BACK
 
     init {
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -40,40 +46,8 @@ class ManejadorCamara(
         cameraProviderFuture.addListener(Runnable {
             try {
                 cameraProvider = cameraProviderFuture.get()
-
-                // Configuración del Preview
-                preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
-                }
-
-                // Configuración de ImageCapture (para fotos)
-                imageCapture = ImageCapture.Builder()
-                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                    .build()
-
-                // Configuración de VideoCapture (para videos)
-                val recorder = Recorder.Builder()
-                    .setQualitySelector(QualitySelector.from(Quality.HIGHEST))
-                    .build()
-                videoCapture = VideoCapture.withOutput(recorder)
-
-                // Seleccionar la cámara trasera por defecto
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                // Desvincular todos los casos de uso antes de volver a vincular
-                cameraProvider?.unbindAll()
-
-                // Vincular casos de uso a la cámara
-                cameraProvider?.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    preview,
-                    imageCapture,
-                    videoCapture
-                )
-
+                bindCameraUseCases()
                 Log.d("ManejadorCamara", "Cámara iniciada exitosamente")
-
             } catch (exc: Exception) {
                 Log.e("ManejadorCamara", "Fallo al vincular casos de uso", exc)
                 Toast.makeText(
@@ -85,13 +59,96 @@ class ManejadorCamara(
         }, ContextCompat.getMainExecutor(context))
     }
 
+    private fun bindCameraUseCases() {
+        val cameraProvider = cameraProvider ?: return
+
+        // Unbind antes de bind
+        cameraProvider.unbindAll()
+
+        // Preview
+        preview = Preview.Builder().build().also {
+            it.setSurfaceProvider(previewView.surfaceProvider)
+        }
+
+        // ImageCapture
+        imageCapture = ImageCapture.Builder()
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            .build()
+
+        // VideoCapture (Recorder)
+        val recorder = Recorder.Builder()
+            .setQualitySelector(QualitySelector.from(Quality.HIGHEST))
+            .build()
+        videoCapture = VideoCapture.withOutput(recorder)
+
+        // Selector por lensFacing (BACK / FRONT)
+        val cameraSelector = CameraSelector.Builder()
+            .requireLensFacing(lensFacing)
+            .build()
+
+        // Bind y guardar el Camera instance
+        camera = cameraProvider.bindToLifecycle(
+            lifecycleOwner,
+            cameraSelector,
+            preview,
+            imageCapture,
+            videoCapture
+        )
+    }
+
+    fun cambiarCamara() {
+        // No permitir cambio mientras se esté grabando
+        if (recording != null) {
+            Toast.makeText(context, "Detener grabación antes de cambiar la cámara", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK)
+            CameraSelector.LENS_FACING_FRONT
+        else
+            CameraSelector.LENS_FACING_BACK
+
+        try {
+            bindCameraUseCases()
+            val nombre = if (lensFacing == CameraSelector.LENS_FACING_BACK) "trasera" else "frontal"
+            Toast.makeText(context, "Cámara cambiada a $nombre", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.e("ManejadorCamara", "Error al cambiar cámara", e)
+            Toast.makeText(context, "Error al cambiar cámara: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun toggleFlash() {
+        val cam = camera
+        if (cam == null) {
+            Toast.makeText(context, "Cámara no inicializada", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Verificar si el sensor tiene flash
+        val hasFlash = try {
+            cam.cameraInfo.hasFlashUnit()
+        } catch (e: Exception) {
+            false
+        }
+
+        if (!hasFlash) {
+            Toast.makeText(context, "Flash no disponible en esta cámara", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Obtener estado actual y togglear
+        val currentTorch = cam.cameraInfo.torchState.value == TorchState.ON
+        cam.cameraControl.enableTorch(!currentTorch)
+        Toast.makeText(context, if (!currentTorch) "Flash activado" else "Flash desactivado", Toast.LENGTH_SHORT).show()
+    }
+
     fun tomarFoto() {
         val imageCapture = imageCapture ?: run {
             Toast.makeText(context, "Cámara no inicializada", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Crear nombre de archivo con marca de tiempo
         val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US)
             .format(System.currentTimeMillis())
         val contentValues = ContentValues().apply {
@@ -102,7 +159,6 @@ class ManejadorCamara(
             }
         }
 
-        // Configurar opciones de salida
         val outputOptions = ImageCapture.OutputFileOptions
             .Builder(
                 context.contentResolver,
@@ -140,7 +196,6 @@ class ManejadorCamara(
             return
         }
 
-        // Si ya hay una grabación en curso, mostrar mensaje
         if (recording != null) {
             Toast.makeText(context, "Ya hay una grabación en curso", Toast.LENGTH_SHORT).show()
             return
