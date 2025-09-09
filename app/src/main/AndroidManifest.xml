@@ -5,6 +5,22 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Permiso para grabar audio, necesario si vas a grabar video con sonido -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Permiso para escribir en almacenamiento externo (necesario para API < 29 si no usas MediaStore) -->
+    <!-- Para API 29+ con MediaStore, este permiso para escribir no es estrictamente necesario si guardas en colecciones públicas -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+
+    <!-- Declara que tu app usa la cámara, pero no es obligatoria -->
+    <!-- Si la cámara es esencial, cambia android:required="false" a android:required="true" -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
 
 
     <application
