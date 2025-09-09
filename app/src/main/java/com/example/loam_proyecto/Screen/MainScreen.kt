@@ -22,8 +22,18 @@ fun MainScreen(navController: NavHostController) {
         }
         LlamarConsejoInge()
 
-        Button(onClick = {navController.navigate("mapa")} ) {
+        Button( onClick = {navController.navigate("mapa")} ) {
             Text("Ver Mapa")
         }
+
+        Button( onClick = {navController.navigate("bateria")} ){
+            Text("Ver Bateria")
+        }
+
+        Button( onClick = {navController.navigate("Chat")} ){
+            Text("Chat")
+        }
+
+
     }
 }

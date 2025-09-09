@@ -64,6 +64,8 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.0")
     implementation("com.google.firebase:firebase-auth:21.0.1")
     implementation("com.google.firebase:firebase-database:20.0.3")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
     implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
 
     implementation("io.ktor:ktor-client-core:2.3.6")
