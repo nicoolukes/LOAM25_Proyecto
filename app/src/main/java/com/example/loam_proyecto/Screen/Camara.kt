@@ -335,23 +335,6 @@ fun Camara() {
                             fontWeight = FontWeight.Medium
                         )
                     }
-
-                    // Modo Retrato (placeholder)
-                    TextButton(onClick = { /* TODO: Modo retrato */ }) {
-                        Icon(
-                            imageVector = Icons.Filled.Portrait,
-                            contentDescription = "Retrato",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "RETRATO",
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
                 }
             }
 
