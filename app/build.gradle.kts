@@ -90,5 +90,9 @@ dependencies {
     implementation("androidx.camera:camera-video:1.3.0")
     implementation("androidx.camera:camera-view:1.3.0")
     implementation("com.google.guava:guava:32.1.3-android")
+    val compose_version = ""
+    implementation("androidx.compose.ui:ui:${compose_version}")
+    implementation("androidx.compose.material:material:${compose_version}")
+    implementation("androidx.compose.material:material-icons-extended:${compose_version}")
 }
 
