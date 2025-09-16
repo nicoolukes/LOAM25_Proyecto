@@ -39,18 +39,21 @@ fun MapaScreen() {
     val context = LocalContext.current
     var error by remember { mutableStateOf<String?>(null) }
     var ultimaUbicacion by remember { mutableStateOf<GeoPoint?>(null) }
-    var direc by remember { mutableStateOf("buscando direccion") }
+    var direc by remember { mutableStateOf("buscando direccion") } //Guardo la dirección en texto que tiene  la ubicación.
 
 
     val mapView = remember{
+        //creo la vista del mama
         MapView(context).apply{
+            //configuraciones
             setTileSource(TileSourceFactory.MAPNIK)
             setMultiTouchControls(true)
-
             controller.setZoom(15.0)
             controller.setCenter(GeoPoint(-34.6037, -58.3816))
         }
     }
+
+    //chequeo permisos
     val permisoUbicacion = remember {
         mutableStateOf(
             ActivityCompat.checkSelfPermission(
@@ -58,26 +61,28 @@ fun MapaScreen() {
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
-    val launcher = rememberLauncherForActivityResult(
+    // muestra la peticion de permisos
+    val laun = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted -> permisoUbicacion.value = isGranted }
 
     LaunchedEffect(Unit) {
         if (!permisoUbicacion.value)
-            launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            laun.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     LaunchedEffect(Unit) {
         if (permisoUbicacion.value){
-            val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), mapView)
-            locationOverlay.enableMyLocation()
-            locationOverlay.enableFollowLocation()
+            val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), mapView) //dibujo mi posicion en el mapa
+            locationOverlay.enableMyLocation() //escucha el GPS
+            locationOverlay.enableFollowLocation() // hace que siga mi posicion
             mapView.overlays.add(locationOverlay)
 
-            locationOverlay.runOnFirstFix {
-                ultimaUbicacion = locationOverlay.myLocation
+            locationOverlay.runOnFirstFix { // cuando hay una ubicacion valida
+
+                ultimaUbicacion = locationOverlay.myLocation // la guarda
                 ultimaUbicacion?.let{
-                    direc = getDireccion(context, it)
+                    direc = getDireccion(context, it) // la traduce a texto
                 }
             }
         }else{

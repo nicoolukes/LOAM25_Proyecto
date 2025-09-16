@@ -22,22 +22,28 @@ import com.example.loam_proyecto.repo.Chat
 import com.example.loam_proyecto.data.Mensaje
 
 @Composable
-fun ChatScreen(chat: Chat = Chat()) {
+fun ChatScreen() {
+    val chat = Chat()
     var mensaje by remember { mutableStateOf("") }
     var listaMensaje by remember { mutableStateOf(listOf<Mensaje>()) }
 
     LaunchedEffect(Unit) {
-        chat.recivirMensaje { msgs -> listaMensaje = msgs }
+        chat.recivirMensaje { mensaj -> listaMensaje = mensaj }
     }
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         LazyColumn(
             modifier = Modifier.weight(1f),
             reverseLayout = false
         ) {
-            items(listaMensaje) { msg ->
-                val color = if (msg.autor == "usuario") Color.Green else Color.Blue
+            items(listaMensaje) { mens ->
+                val color : Color
+                if (mens.autor == "usuario") {
+                    color = Color.Green
+                }else {
+                    color = Color.Blue
+                }
                 Text(
-                    text = "${msg.autor}: ${msg.texto}",
+                    text = "${mens.autor}: ${mens.texto}",
                     color = color,
                     modifier = Modifier.padding(4.dp)
                 )

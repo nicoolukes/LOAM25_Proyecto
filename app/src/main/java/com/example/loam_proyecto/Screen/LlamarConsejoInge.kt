@@ -25,7 +25,7 @@ fun LlamarConsejoInge() {
         },
         modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp) // botón grande
+            .height(80.dp)
     ){
         Text(text = "Llamar al Consejo de Ingeniería")
     }
