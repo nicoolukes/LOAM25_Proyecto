@@ -33,6 +33,11 @@ fun MainScreen(navController: NavHostController) {
         Button( onClick = {navController.navigate("Chat")} ){
             Text("Chat")
         }
+
+        Button( onClick = {navController.navigate("audio")} ){
+            Text("Grabar audio")
+        }
+
         Button( onClick = {navController.navigate("camara")} ){
             Text("Camara")
         }
