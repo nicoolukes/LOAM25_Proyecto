@@ -151,7 +151,7 @@ class ManejadorCamara(
             return
         }
 
-        vibrarDispositivo()
+        
 
         val nueva = if (lensFacing == CameraSelector.LENS_FACING_BACK)
             CameraSelector.LENS_FACING_FRONT
@@ -189,7 +189,7 @@ class ManejadorCamara(
             return
         }
 
-        vibrarDispositivo()
+       
         isFlashOn = !isFlashOn
 
         try {
@@ -211,7 +211,7 @@ class ManejadorCamara(
             return
         }
 
-        vibrarDispositivo(VibrationEffect.DEFAULT_AMPLITUDE)
+        
 
         val name = "IMG_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(System.currentTimeMillis())}"
         val contentValues = ContentValues().apply {
@@ -261,7 +261,7 @@ class ManejadorCamara(
             return
         }
 
-        vibrarDispositivo(VibrationEffect.DEFAULT_AMPLITUDE)
+        
 
         val name = "VID_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(System.currentTimeMillis())}"
         val contentValues = ContentValues().apply {
@@ -337,17 +337,7 @@ class ManejadorCamara(
         }
     }
 
-    @RequiresPermission(Manifest.permission.VIBRATE)
-    private fun vibrarDispositivo(amplitude: Int = VibrationEffect.DEFAULT_AMPLITUDE) {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(VibrationEffect.createOneShot(50, amplitude))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator?.vibrate(50)
-            }
-        } catch (_: Exception) { /* no reventar por vibrador */ }
-    }
+    
 
     fun getIsRecording(): Boolean = isRecording
 
