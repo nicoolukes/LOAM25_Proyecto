@@ -8,6 +8,7 @@ import android.media.MediaRecorder
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -35,15 +36,14 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import com.example.loam_proyecto.data.StartResult
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Grabador_audio(
-    navController: NavHostController,
-    manejadorPermisos: ManejadorPermisos? = null
-) {
+fun Grabador_audio(navController: NavHostController, manejadorPermisos: ManejadorPermisos? = null)
+{
     val context = LocalContext.current
-    val activity = LocalContext.current as? Activity
+    val activity = LocalActivity.current
     val permisos = manejadorPermisos ?: activity?.let { ManejadorPermisos(it) }
 
     val scope = rememberCoroutineScope()
@@ -53,8 +53,6 @@ fun Grabador_audio(
     var audioFilePath by remember { mutableStateOf("") }
     var recordingTime by remember { mutableStateOf(0L) }
     var hasPermission by remember { mutableStateOf(permisos?.checarPermisosAudio() ?: false) }
-    var pendingStartAfterPermission by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
 
     // Playback
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
@@ -66,9 +64,7 @@ fun Grabador_audio(
     ) { perms ->
         val allGranted = perms.values.all { it }
         hasPermission = allGranted
-        if (allGranted && pendingStartAfterPermission) {
-            pendingStartAfterPermission = false
-            // arrancamos la grabación automáticamente
+        if (allGranted ) {
             scope.launch {
                 val result = startRecordingAsync(context)
                 withContext(Dispatchers.Main) {
@@ -76,29 +72,13 @@ fun Grabador_audio(
                         mediaRecorder = result.recorder
                         audioFilePath = result.filePath
                         isRecording = true
-                        errorMessage = ""
-                    } else {
-                        errorMessage = result.message
                     }
                 }
             }
         } else if (!allGranted) {
-            pendingStartAfterPermission = false
+           // pendingStartAfterPermission = false
             Toast.makeText(context, "Permisos denegados. No se puede grabar.", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    // Re-check permisos al volver al foreground
-    val lifecycleOwner = LocalContext.current as? androidx.lifecycle.LifecycleOwner
-    DisposableEffect(lifecycleOwner) {
-        val owner = lifecycleOwner
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                hasPermission = permisos?.checarPermisosAudio() ?: false
-            }
-        }
-        owner?.lifecycle?.addObserver(observer)
-        onDispose { owner?.lifecycle?.removeObserver(observer) }
     }
 
     // Timer de grabación
@@ -156,7 +136,6 @@ fun Grabador_audio(
 
                 FloatingActionButton(
                     onClick = {
-                        Log.d("GrabadorAudio", "Botón presionado. hasPermission=$hasPermission, isRecording=$isRecording")
                         if (hasPermission) {
                             if (isRecording) {
                                 // detener
@@ -166,10 +145,7 @@ fun Grabador_audio(
                                         if (ok) {
                                             mediaRecorder = null
                                             isRecording = false
-                                            errorMessage = ""
                                             Toast.makeText(context, "Audio guardado: ${File(audioFilePath).name}", Toast.LENGTH_SHORT).show()
-                                        } else {
-                                            errorMessage = msg
                                         }
                                     }
                                 }
@@ -182,20 +158,14 @@ fun Grabador_audio(
                                             mediaRecorder = result.recorder
                                             audioFilePath = result.filePath
                                             isRecording = true
-                                            errorMessage = ""
-                                        } else {
-                                            errorMessage = result.message
                                         }
                                     }
                                 }
                             }
                         } else {
                             // pedimos permisos con el launcher; si el usuario da ok, arrancamos automáticamente
-                            pendingStartAfterPermission = true
+
                             val permsToAsk = mutableListOf(Manifest.permission.RECORD_AUDIO)
-                            // pedimos storage solo para APIs antiguas (no hace daño pedirlo)
-                            permsToAsk.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                            permsToAsk.add(Manifest.permission.READ_EXTERNAL_STORAGE)
                             permissionLauncher.launch(permsToAsk.toTypedArray())
                         }
                     },
@@ -242,9 +212,7 @@ fun Grabador_audio(
                                             isPlaying = true
                                         }
                                     }
-                                } catch (e: Exception) {
-                                    Log.e("GrabadorAudio", "Error pause/resume", e)
-                                }
+                                } catch (_: Exception) { }
                             }
                         }) {
                             Icon(imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
@@ -268,9 +236,6 @@ fun Grabador_audio(
                     }
                 }
 
-                if (errorMessage.isNotEmpty()) {
-                    Text("Error: $errorMessage", color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
-                }
             }
         }
 
@@ -282,16 +247,11 @@ fun Grabador_audio(
     }
 }
 
-/** --- Helpers asincrónicos --- **/
-
-private data class StartResult(val recorder: MediaRecorder?, val filePath: String, val success: Boolean, val message: String)
-
 private suspend fun startRecordingAsync(context: Context): StartResult = withContext(Dispatchers.IO) {
     try {
         val mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             MediaRecorder(context)
         } else {
-            @Suppress("DEPRECATION")
             MediaRecorder()
         }
 
@@ -317,10 +277,8 @@ private suspend fun startRecordingAsync(context: Context): StartResult = withCon
             try { mediaRecorder.release() } catch (_: Exception) {}
             return@withContext StartResult(null, "", false, "Falta permiso de micrófono: ${se.message}")
         }
-
         return@withContext StartResult(mediaRecorder, audioFile.absolutePath, true, "")
     } catch (e: Exception) {
-        Log.e("GrabadorAudio", "Error al iniciar grabación", e)
         return@withContext StartResult(null, "", false, e.message ?: "Error desconocido al iniciar")
     }
 }
@@ -361,8 +319,7 @@ private suspend fun startPlayback(context: Context, filePath: String, onReady: (
         mp.start()
         onReady(mp)
         true
-    } catch (e: Exception) {
-        Log.e("GrabadorAudio", "Error reproduciendo audio", e)
+    } catch (_: Exception) {
         false
     }
 }

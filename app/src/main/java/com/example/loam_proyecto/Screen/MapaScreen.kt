@@ -40,8 +40,6 @@ fun MapaScreen() {
     var error by remember { mutableStateOf<String?>(null) }
     var ultimaUbicacion by remember { mutableStateOf<GeoPoint?>(null) }
     var direc by remember { mutableStateOf("buscando direccion") } //Guardo la dirección en texto que tiene  la ubicación.
-
-
     val mapView = remember{
         //creo la vista del mama
         MapView(context).apply{
@@ -61,11 +59,12 @@ fun MapaScreen() {
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
-    // muestra la peticion de permisos
+    // se crea la peticion de permisos
     val laun = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted -> permisoUbicacion.value = isGranted }
+    ) { isOtorgado -> permisoUbicacion.value = isOtorgado }
 
+    // solicita el permiso
     LaunchedEffect(Unit) {
         if (!permisoUbicacion.value)
             laun.launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -73,14 +72,14 @@ fun MapaScreen() {
 
     LaunchedEffect(Unit) {
         if (permisoUbicacion.value){
-            val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), mapView) //dibujo mi posicion en el mapa
-            locationOverlay.enableMyLocation() //escucha el GPS
-            locationOverlay.enableFollowLocation() // hace que siga mi posicion
-            mapView.overlays.add(locationOverlay)
+            val miLocacionOver = MyLocationNewOverlay(GpsMyLocationProvider(context), mapView) //dibujo mi posicion en el mapa
+            miLocacionOver.enableMyLocation() //escucha el GPS
+            miLocacionOver.enableFollowLocation() // hace que siga mi posicion
+            mapView.overlays.add(miLocacionOver)
 
-            locationOverlay.runOnFirstFix { // cuando hay una ubicacion valida
+            miLocacionOver.runOnFirstFix { // cuando hay una ubicacion valida
 
-                ultimaUbicacion = locationOverlay.myLocation // la guarda
+                ultimaUbicacion = miLocacionOver.myLocation // la guarda
                 ultimaUbicacion?.let{
                     direc = getDireccion(context, it) // la traduce a texto
                 }
@@ -89,6 +88,7 @@ fun MapaScreen() {
             error = "El GPS no esta activado o no hay permisos"
         }
     }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceBetween
@@ -101,7 +101,7 @@ fun MapaScreen() {
         Button(
             onClick = {
                 ultimaUbicacion?.let{
-                    guardarUbicacionEnFirebase(it, direc)
+                    guardarUbicacionEnFirebase(it, direc, context)
                 } ?: run{
                     error = "no se pudo obtener ubicacion"
                 }
@@ -111,6 +111,7 @@ fun MapaScreen() {
             Text("Guardar ubicacion")
         }
         AndroidView(factory = {mapView}, modifier = Modifier.weight(1f))
+        //AndroidView es un puente que permite incrustar una View clásica de Android dentro de un Composable.
     }
 
 }

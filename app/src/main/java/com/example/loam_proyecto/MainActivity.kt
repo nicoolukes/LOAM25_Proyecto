@@ -25,11 +25,7 @@ class MainActivity : ComponentActivity() {
                 AppNavegation()
             }
         }
-        val database = FirebaseDatabase.getInstance()
-        val myRef = database.getReference("mensaje")
 
-        // Escribe un valor en la base
-        myRef.setValue("Hola")
     }
 }
 

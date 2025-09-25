@@ -4,6 +4,7 @@ import android.content.Context
 import android.location.Geocoder
 import android.util.Log
 import android.util.Log.e
+import android.widget.Toast
 import com.google.firebase.database.FirebaseDatabase
 import org.osmdroid.util.GeoPoint
 import java.util.Locale
@@ -12,27 +13,28 @@ import kotlin.math.log
 data class Ubicacion(
     val lat: Double = 0.0,
     val lon: Double = 0.0,
+    val dereccion: String = "",
     val referencia: String = ""
 )
 
-fun guardarUbicacionEnFirebase(geoPoint: GeoPoint, direccion: String) {
+fun guardarUbicacionEnFirebase(geoPoint: GeoPoint, direccion: String, context: Context) {
     val database = FirebaseDatabase.getInstance()
-    var ref = database.getReference("ubicaciones")
+    val ref = database.getReference("ubicaciones")
 
-    val datos = hashMapOf(
-        "latitud" to geoPoint.latitude,
-        "longitud" to geoPoint.longitude,
-        "dereccion" to direccion,
-        "referencia" to "referencia del ingeniero"
+    val datos = Ubicacion(
+        lat = geoPoint.latitude,
+        lon = geoPoint.longitude,
+        dereccion = direccion,
+        referencia = "referencia del ingeniero"
 
     )
 
     ref.push().setValue(datos)
         .addOnSuccessListener {
-            Log.d("firebase", "Ubicacion guardada en la base de datos")
+            Toast.makeText(context, "Ubicación guardada", Toast.LENGTH_SHORT).show()
         }
         .addOnFailureListener { e ->
-            Log.e("firebase", "no se pudo guardar", e)
+            Toast.makeText(context, "Error al guardar ubicación", Toast.LENGTH_SHORT).show()
         }
 
 }

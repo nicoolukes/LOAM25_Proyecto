@@ -14,7 +14,8 @@ import com.example.loam_proyecto.Screen.MainScreen
 import com.example.loam_proyecto.Screen.ManejadorPermisos
 import com.example.loam_proyecto.Screen.MapaScreen
 import com.example.loam_proyecto.Screen.PreciosScreen
-
+import com.example.loam_proyecto.Screen.SirenaButton
+import com.example.loam_proyecto.Screen.LinternaScreen
 
 
 @Composable
@@ -29,7 +30,7 @@ fun AppNavegation (){
         composable ("mapa"){ MapaScreen()  }
         composable ("bateria"){ BateryScreen() }
         composable ("Chat"){ ChatScreen() }
-        composable("audio") {
+      composable("audio") {
             val context = LocalContext.current
             val activity = context as? Activity
             val manejador = activity?.let { ManejadorPermisos(it) }
@@ -39,10 +40,12 @@ fun AppNavegation (){
                 manejadorPermisos = manejador
             )
         }
-        composable ("camara"){ Camara() }
-        
 
-    }
+        composable ("camara"){ Camara() }
+        composable ("SOS") { SirenaButton() }
+        composable ("linterna") { LinternaScreen()  }
+
+}
 
 
 

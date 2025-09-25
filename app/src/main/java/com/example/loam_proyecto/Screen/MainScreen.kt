@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 
+
 @Composable
 fun MainScreen(navController: NavHostController) {
     Column(
@@ -40,6 +41,13 @@ fun MainScreen(navController: NavHostController) {
 
         Button( onClick = {navController.navigate("camara")} ){
             Text("Camara")
+        }
+        Button( onClick = {navController.navigate("SOS")} ){
+            Text("S.O.S")
+        }
+
+        Button( onClick = {navController.navigate("Linterna")} ){
+            Text("Linternita")
         }
 
 

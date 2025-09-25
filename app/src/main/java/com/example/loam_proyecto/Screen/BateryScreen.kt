@@ -63,8 +63,7 @@ fun BateryScreen() {
             estado = -1
         }
 
-        if (estado == BatteryManager.BATTERY_STATUS_CHARGING ||
-            estado == BatteryManager.BATTERY_STATUS_FULL) {
+        if (estado == BatteryManager.BATTERY_STATUS_CHARGING || estado == BatteryManager.BATTERY_STATUS_FULL) {
             cargar = true
         } else {
             cargar = false

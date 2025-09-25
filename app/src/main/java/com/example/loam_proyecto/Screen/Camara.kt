@@ -33,37 +33,35 @@ import androidx.core.content.ContextCompat
 fun Camara() {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val previewView = remember { PreviewView(context) }
-
+    val vistaPrev = remember { PreviewView(context) }
     // Estados
-    var hasCameraPermission by remember {
+    var tienePermiso by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
                     ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         )
     }
-
-    var isRecording by remember { mutableStateOf(false) }
+    var isGrabando by remember { mutableStateOf(false) }
     var isFlashOn by remember { mutableStateOf(false) }
-    var isBackCamera by remember { mutableStateOf(true) }
+    var isBackCamara by remember { mutableStateOf(true) }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
+    val permisoLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        hasCameraPermission = permissions[Manifest.permission.CAMERA] == true &&
-                permissions[Manifest.permission.RECORD_AUDIO] == true
+    ) { permisos ->
+        tienePermiso = permisos[Manifest.permission.CAMERA] == true &&
+                permisos[Manifest.permission.RECORD_AUDIO] == true
     }
 
-    // Inicializa manejador solo cuando tengamos permisos
-    val manejadorCamara = remember(context, previewView, lifecycleOwner) {
-        ManejadorCamara(context, previewView, lifecycleOwner)
+    // Inicializa manejador
+    val manejadorCamara = remember(context, vistaPrev, lifecycleOwner) {
+        ManejadorCamara(context, vistaPrev, lifecycleOwner)
     }
 
-    LaunchedEffect(hasCameraPermission) {
-        if (hasCameraPermission) {
+    LaunchedEffect(tienePermiso) {
+        if (tienePermiso) {
             manejadorCamara.prenderCamara()
         } else {
-            permissionLauncher.launch(
+            permisoLauncher.launch(
                 arrayOf(
                     Manifest.permission.CAMERA,
                     Manifest.permission.RECORD_AUDIO
@@ -79,10 +77,10 @@ fun Camara() {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        if (hasCameraPermission) {
+        if (tienePermiso) {
             // Vista previa de la cámara
             AndroidView(
-                factory = { previewView },
+                factory = {vistaPrev},
                 modifier = Modifier.fillMaxSize()
             )
 
@@ -119,7 +117,7 @@ fun Camara() {
                 Spacer(modifier = Modifier.weight(1f))
 
                 // Indicador de grabación
-                if (isRecording) {
+                if (isGrabando) {
                     Card(
                         modifier = Modifier
                             .background(Color.Red, RoundedCornerShape(12.dp))
@@ -154,7 +152,7 @@ fun Camara() {
                     .align(Alignment.BottomCenter)
                     // Respetar navigation bar y un poco más de separación
                     .navigationBarsPadding()
-                    .padding(bottom = 8.dp) // mueve un poco más arriba si hace falta
+                    .padding(bottom = 8.dp)
                     .background(
                         Color.Black.copy(alpha = 0.7f),
                         RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
@@ -167,45 +165,6 @@ fun Camara() {
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Galería (placeholder)
-                    IconButton(
-                        onClick = {
-                            val lastUri = manejadorCamara.getLastSavedImageUri()
-                            if (lastUri != null) {
-                                // Abrir la última imagen con ACTION_VIEW
-                                val viewIntent = Intent(Intent.ACTION_VIEW).apply {
-                                    setDataAndType(lastUri, "image/*")
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-                                }
-                                try {
-                                    context.startActivity(viewIntent)
-                                } catch (e: Exception) {
-                                    // Si algo falla, abrimos la galería general
-                                    val galleryIntent = Intent(Intent.ACTION_VIEW, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                                    galleryIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    context.startActivity(galleryIntent)
-                                }
-                            } else {
-                                // No hay foto reciente: abrir app de galería
-                                val galleryIntent = Intent(Intent.ACTION_VIEW, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                                galleryIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(galleryIntent)
-                            }
-                        },
-                        modifier = Modifier
-                            .size(50.dp)
-                            .background(
-                                color = Color.White.copy(alpha = 0.2f),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Photo,
-                            contentDescription = "Galería",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
 
                     // Botón central (Foto/Video)
                     Box(contentAlignment = Alignment.Center) {
@@ -214,7 +173,7 @@ fun Camara() {
                             modifier = Modifier
                                 .size(80.dp)
                                 .background(
-                                    color = if (isRecording) Color.Red else Color.White,
+                                    color = if (isGrabando) Color.Red else Color.White,
                                     shape = CircleShape
                                 )
                         )
@@ -222,9 +181,9 @@ fun Camara() {
                         // Botón de captura
                         IconButton(
                             onClick = {
-                                if (isRecording) {
+                                if (isGrabando) {
                                     manejadorCamara.detenerGrabacion()
-                                    isRecording = false
+                                    isGrabando = false
                                 } else {
                                     manejadorCamara.tomarFoto()
                                 }
@@ -232,11 +191,11 @@ fun Camara() {
                             modifier = Modifier
                                 .size(68.dp)
                                 .background(
-                                    color = if (isRecording) Color.White else Color.Transparent,
-                                    shape = if (isRecording) RoundedCornerShape(8.dp) else CircleShape
+                                    color = if (isGrabando) Color.White else Color.Transparent,
+                                    shape = if (isGrabando) RoundedCornerShape(8.dp) else CircleShape
                                 )
                         ) {
-                            if (!isRecording) {
+                            if (!isGrabando) {
                                 Box(
                                     modifier = Modifier
                                         .size(60.dp)
@@ -257,7 +216,7 @@ fun Camara() {
                     IconButton(
                         onClick = {
                             manejadorCamara.cambiarCamara()
-                            isBackCamera = !isBackCamera
+                            isBackCamara = !isBackCamara
                         },
                         modifier = Modifier
                             .size(50.dp)
@@ -286,27 +245,27 @@ fun Camara() {
                     // Modo Video
                     TextButton(
                         onClick = {
-                            if (!isRecording) {
+                            if (!isGrabando) {
                                 manejadorCamara.empezarGrabacion()
-                                isRecording = true
+                                isGrabando = true
                             }
                         },
                         modifier = Modifier
                             .background(
-                                color = if (isRecording) Color.Red.copy(alpha = 0.3f) else Color.Transparent,
+                                color = if (isGrabando) Color.Red.copy(alpha = 0.3f) else Color.Transparent,
                                 shape = RoundedCornerShape(20.dp)
                             )
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Videocam,
                             contentDescription = "Video",
-                            tint = if (isRecording) Color.Red else Color.White,
+                            tint = if (isGrabando) Color.Red else Color.White,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "VIDEO",
-                            color = if (isRecording) Color.Red else Color.White,
+                            color = if (isGrabando) Color.Red else Color.White,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -317,20 +276,20 @@ fun Camara() {
                         onClick = { /* Ya en modo foto */ },
                         modifier = Modifier
                             .background(
-                                color = if (!isRecording) Color.Yellow.copy(alpha = 0.3f) else Color.Transparent,
+                                color = if (!isGrabando) Color.Yellow.copy(alpha = 0.3f) else Color.Transparent,
                                 shape = RoundedCornerShape(20.dp)
                             )
                     ) {
                         Icon(
                             imageVector = Icons.Filled.PhotoCamera,
                             contentDescription = "Foto",
-                            tint = if (!isRecording) Color.Yellow else Color.White,
+                            tint = if (!isGrabando) Color.Yellow else Color.White,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "FOTO",
-                            color = if (!isRecording) Color.Yellow else Color.White,
+                            color = if (!isGrabando) Color.Yellow else Color.White,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -373,7 +332,7 @@ fun Camara() {
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(
                             onClick = {
-                                permissionLauncher.launch(
+                                permisoLauncher.launch(
                                     arrayOf(
                                         Manifest.permission.CAMERA,
                                         Manifest.permission.RECORD_AUDIO
